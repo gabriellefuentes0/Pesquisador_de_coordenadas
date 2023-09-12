@@ -1,0 +1,39 @@
+#Importando a biblioteca
+import pandas as pd
+from geopy.geocoders import Nominatim
+from time import sleep
+
+# Carrega o arquivo Excel em um DataFrame
+df = pd.read_excel(Endereço da sua planilha )
+
+# Cria uma nova coluna que é a concatenação das colunas na sua planilha, com uma vírgula como separador
+df['Endereço'] = df['Rua'].astype(str) + ', ' +df['Municipio'].astype(str) +', ' + df['Bairro'].astype(str) + ', ' + df['Estado'].astype(str)
+
+# Obter os endereços e removendo caracteres
+enderecos = df["Endereço"].tolist()
+
+def obter_coordenadas(endereco):
+    geolocator = Nominatim(user_agent="teste")
+    try:
+        location = geolocator.geocode(endereco)
+        sleep(0,2)  # adiciona um atraso segundo entre as requisições
+        if location:
+            return location.latitude, location.longitude
+    except Exception as e:
+        print(f"Erro ao obter coordenadas para o endereço {endereco}: {e}")
+    return None, None  # retorna None para latitude e longitude se não houver coordenadas
+
+# Criar listas para armazenar as coordenadas
+latitudes = []
+longitudes = []
+for endereco in enderecos:
+    latitude, longitude = obter_coordenadas(endereco)
+    latitudes.append(latitude)
+    longitudes.append(longitude)
+
+# Adicionar as coordenadas como novas colunas
+df["Latitude"] = latitudes
+df["Longitude"] = longitudes
+
+# Salvar
+df.to_excel(Endereço da sua planilha, index=False)
