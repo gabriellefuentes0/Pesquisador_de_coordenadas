@@ -1,1 +1,96 @@
 !pip install requests
+
+import requests
+import json
+import pandas as pd
+import timeit
+
+
+#Inicio do temporizador
+
+import timeit
+
+start = timeit.default_timer()
+
+# Carrega o arquivo Excel em um DataFrame pandas
+
+df = pd.read_excel(#Sua planilha)
+
+# Cria uma nova coluna que é a concatenação das colunas, com uma vírgula como separador
+
+df['Endereço'] = df['Rua'].astype(str) + ', ' + df['Bairro'].astype(str) + ', ' + df['Cidade'].astype(str)
+
+# Salva o DataFrame atualizado de volta para o arquivo Excel
+
+df.to_excel(#Sua planilha, index=False)
+
+
+
+#Biblioteca de localização
+
+
+#Define uma função, que vai receber como parâmetro uma string location representando o local que queremos obter a geolocalização.
+#Na função get_geocode(), configurar os parâmetros para a solicitação à API do Google Geocoding,
+#que incluem uma chave de API (key) e o local (address) para o qual queremos obter as coordenadas geográficas.
+
+def get_geocode(location):
+    params = {
+        'key': #Sua chave API aqui,
+        'address': location
+    }
+#Realiza-se uma solicitação GET à API do Google Geocoding usando o módulo requests.
+
+    base_url = 'https://maps.googleapis.com/maps/api/geocode/json?'
+    responde = requests.get(base_url, params=params)
+    
+    
+#Se o código de status da resposta é 200, o que significa que a solicitação foi bem-sucedida,
+#carrega a resposta JSON e extrai a latitude e a longitude do local fornecido da resposta.
+#Se houver mais de um resultado, o código usa o primeiro.
+#Se não houver resultados, o código imprime uma mensagem indicando que não foi possível
+#encontrar as coordenadas para a localização fornecida.
+
+    if responde.status_code == 200:
+        data = json.loads(responde.text)
+        if len(data['results']) > 0:
+            latitude = data['results'][0]['geometry']['location']['lat']
+            longitude = data['results'][0]['geometry']['location']['lng']
+            return latitude, longitude
+        else:
+            print('Não foi possível encontrar as coordenadas para a localização fornecida.')
+            return None, None
+    else:
+        print('Erro na solicitação:', responde.status_code)
+        return None, None
+
+
+# Carrega o arquivo Excel em um DataFrame pandas
+
+df = pd.read_excel(#Sua planilha)
+
+# Criar duas novas colunas para latitude e longitude
+
+df['Latitude'] = None
+df['Longitude'] = None
+
+# Loop através das linhas do DataFrame
+
+for idx, row in df.iterrows():
+    
+    # Assumir que a coluna "Endereço" contém o endereço para o qual queremos obter a geolocalização
+    
+    location = row['Endereço']
+    lat, lon = get_geocode(location)
+
+    # Atualiza as colunas Latitude e Longitude com os valores retornados
+    df.at[idx, 'Latitude'] = lat
+    df.at[idx, 'Longitude'] = lon
+
+# Salva o DataFrame atualizado de volta para o arquivo Excel
+df.to_excel(#Sua planilha, index=False)
+
+
+#Final do temporizador
+end = timeit.default_timer()
+print(f'Tempo de execução: {end - start} segundos')
+
